@@ -1,5 +1,4 @@
 require 'json'
-require 'pp'
 
 # path_to_1 - coordinates data source
 # path_to_2 - information data source
@@ -12,7 +11,6 @@ def combine_sources(path_to_1, path_to_2, write_path)
 
 			if feature_country['properties']['name'] == information_country['wb:name']
 				feature_country['information'] = information_country	
-				pp feature_country
 			end
 
 		end
@@ -24,3 +22,5 @@ def combine_sources(path_to_1, path_to_2, write_path)
 end
 
 combine_sources("libs/data/world-countries.json", "libs/data/world_names.json", "libs/data/world_names_combined.json")
+
+

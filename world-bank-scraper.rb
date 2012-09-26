@@ -23,4 +23,3 @@ def scraper
 end
 
 scraper
-pp 'Scraper (biked) world bank data."
