@@ -192,11 +192,12 @@ function showNoData(d) {
 
 function	constructBarGraphs(countries) {
 
-	var main_total_width = 1000;
+	var main_total_width = 1300;
 	var main_total_height = 500; 
+	var bar_graph_total_width = 1000;
 	var num_countries = countries.length;
 	var padding = 3;
-  var indiv_country_length = (main_total_width - 40) / num_countries - padding;
+  var indiv_country_length = (bar_graph_total_width - 40) / num_countries - padding;
   var my = d3.max(countries, function(d) { 
 		return d.Gold_medals + d.Silver_medals + d.Bronze_medals;
 	 })
@@ -205,18 +206,24 @@ function	constructBarGraphs(countries) {
 
 	height_scale = d3.scale.linear().domain([0, my]).range([0, main_total_height - 60])
 
-	var x = function(data, index) { return index * ((main_total_width - 40) / num_countries) }
+	var x = function(data, index) { return index * ((bar_graph_total_width - 40) / num_countries) }
 
-	var bar_graph_svg = d3.select('#individual_country_container')
+	var main_graph_svg = d3.select('#individual_country_container')
     .append('svg:svg')
-		.attr('width', main_total_width + 30)
+		.attr('width', main_total_width)
 		.attr('height', main_total_height + 30);
+
+	var bar_graph_svg = main_graph_svg.append('svg:g')
+		.attr('class', 'stacked_bar_graph')
+		.attr('transform', function() {
+			return 'translate(' + ( (main_total_width - bar_graph_total_width) / 2 ) + ', 0)';
+		})
 
 	x_axis_label = bar_graph_svg.append('svg:text')
 		.text('Countries')	
 		.style('fill', '#555')
 		.attr('transform', function() {
-			return 'translate(' + ((main_total_width - 30) / 2) + ',' + (main_total_height + 30) + ')';
+			return 'translate(' + ((bar_graph_total_width - 30) / 2) + ',' + (main_total_height + 30) + ')';
 		})
 
 	country_ticks = bar_graph_svg.selectAll('line.x_ticks')
@@ -342,11 +349,11 @@ function	constructBarGraphs(countries) {
 	y_axis_ticks = bar_graph_svg.selectAll('line.y_ticks')	
 		.data(height_scale.ticks(5))
 	 .enter().append('svg:line')
-		.attr('x1', 30)
+		.attr('x1', 10)
 		.attr('y1', function(d, i) {
 			return height_scale(d) + 86;
 		})
-		.attr('x2', 40)
+		.attr('x2', 20)
 		.attr('y2', function(d, i) {
 			return height_scale(d) + 86;
 		})
@@ -356,8 +363,19 @@ function	constructBarGraphs(countries) {
 		.data(height_scale.ticks(5))
  	 .enter().append('svg:text')	
 		.attr('transform', function(d, i) {
-			return 'translate(0, ' + (main_total_height - height_scale(d) + 10) + ')';
+			return 'translate(-20, ' + (main_total_height - height_scale(d) + 10) + ')';
 		})
+		.attr('text-anchor', 'middle')
 		.text(function(d, i) { return String(d);	})
+
+	y_axis_description = bar_graph_svg.append('svg:text')
+		.text("Number of Medals")
+		.attr('transform', function() {
+			var bounding_box = this.getBBox()
+			var height = bounding_box.width;
+			return 'translate(-50 , ' + (main_total_height / 2 + height / 2)  + ') rotate(270)';
+		})
+		.style('fill', '#555')
+
 
 }
