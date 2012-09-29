@@ -192,9 +192,12 @@ function showNoData(d) {
 
 function	constructBarGraphs(countries) {
 
+	countries.sort(sortCountriesByMedals);
+
 	var main_total_width = 1300;
-	var main_total_height = 500; 
+	var main_total_height = 700; 
 	var bar_graph_total_width = 1000;
+	var bar_graph_total_height = 500;
 	var num_countries = countries.length;
 	var padding = 3;
   var indiv_country_length = (bar_graph_total_width - 40) / num_countries - padding;
@@ -202,35 +205,35 @@ function	constructBarGraphs(countries) {
 		return d.Gold_medals + d.Silver_medals + d.Bronze_medals;
 	 })
 
-	console.log("Countries length " + num_countries + ": Max y is " + my);
-
-	height_scale = d3.scale.linear().domain([0, my]).range([0, main_total_height - 60])
+	height_scale = d3.scale.linear().domain([0, my]).range([0, bar_graph_total_height - 60])
 
 	var x = function(data, index) { return index * ((bar_graph_total_width - 40) / num_countries) }
 
 	var main_graph_svg = d3.select('#individual_country_container')
     .append('svg:svg')
 		.attr('width', main_total_width)
-		.attr('height', main_total_height + 30);
+		.attr('height', main_total_height);
 
 	var bar_graph_svg = main_graph_svg.append('svg:g')
 		.attr('class', 'stacked_bar_graph')
 		.attr('transform', function() {
-			return 'translate(' + ( (main_total_width - bar_graph_total_width) / 2 ) + ', 0)';
+			return 'translate(' + ( (main_total_width - bar_graph_total_width) / 2 ) + ', 20)';
 		})
 
 	x_axis_label = bar_graph_svg.append('svg:text')
-		.text('Countries')	
+		.text('Sampling of Countries that Participated in the Olympics')	
 		.style('fill', '#555')
 		.attr('transform', function() {
-			return 'translate(' + ((bar_graph_total_width - 30) / 2) + ',' + (main_total_height + 30) + ')';
+			var bounding_box = this.getBBox();
+			var text_width = bounding_box.width;
+			return 'translate(' + ((bar_graph_total_width) / 2 - text_width / 2) + ',' + (bar_graph_total_height + 50) + ')';
 		})
 
 	country_ticks = bar_graph_svg.selectAll('line.x_ticks')
 		.data(countries)
 	 .enter().append('svg:line')
 		.attr('y1', 0)
-		.attr('y2', main_total_height)
+		.attr('y2', bar_graph_total_height)
 		.attr('x1', function(d, i) {
 			return x(d, i);
 		})
@@ -271,7 +274,7 @@ function	constructBarGraphs(countries) {
 			return height_scale(total_height);
 		})
 		.attr('transform', function(d, i) {
-			remaining_height = main_total_height - 40 - height_scale(d.Gold_medals + d.Silver_medals + d.Bronze_medals);
+			remaining_height = bar_graph_total_height - 40 - height_scale(d.Gold_medals + d.Silver_medals + d.Bronze_medals);
 			return 'translate(' + (x(d, i) + 30) + ', ' + (50 + remaining_height) + ')';
 		})
 
@@ -296,7 +299,7 @@ function	constructBarGraphs(countries) {
 			return height_scale(total_height);
 		})
 		.attr('transform', function(d, i) {
-			remaining_height = main_total_height - 40 - height_scale(d.Silver_medals + d.Bronze_medals);
+			remaining_height = bar_graph_total_height - 40 - height_scale(d.Silver_medals + d.Bronze_medals);
 			return 'translate(' + (x(d, i) + 30) + ', ' + (50 + remaining_height) + ')';
 		})
 
@@ -321,14 +324,14 @@ function	constructBarGraphs(countries) {
 			return height_scale(total_height);
 		})
 		.attr('transform', function(d, i) {
-			remaining_height = main_total_height - 40 - height_scale(d.Bronze_medals);
+			remaining_height = bar_graph_total_height - 40 - height_scale(d.Bronze_medals);
 			return 'translate(' + (x(d, i) + 30)+ ', ' + (50 + remaining_height) + ')'; })
 
 	rect_text_label = bar_graph_svg.selectAll('text.iso')
 		.data(countries)
 	 .enter().append('svg:text')
 		.style('opacity', 0.0)
-		.style('font-size', 15)
+		.style('font-size', 20)
 		.attr('class', 'iso')
 		.attr('transform', function(d, i) {
 			y_shift = 65;
@@ -363,7 +366,7 @@ function	constructBarGraphs(countries) {
 		.data(height_scale.ticks(5))
  	 .enter().append('svg:text')	
 		.attr('transform', function(d, i) {
-			return 'translate(-20, ' + (main_total_height - height_scale(d) + 10) + ')';
+			return 'translate(-20, ' + (bar_graph_total_height - height_scale(d) + 10) + ')';
 		})
 		.attr('text-anchor', 'middle')
 		.text(function(d, i) { return String(d);	})
@@ -373,9 +376,16 @@ function	constructBarGraphs(countries) {
 		.attr('transform', function() {
 			var bounding_box = this.getBBox()
 			var height = bounding_box.width;
-			return 'translate(-50 , ' + (main_total_height / 2 + height / 2)  + ') rotate(270)';
+			return 'translate(-50 , ' + (bar_graph_total_height / 2 + height / 2)  + ') rotate(270)';
 		})
 		.style('fill', '#555')
 
 
+}
+
+function sortCountriesByMedals(first, second) {
+	var first_medals = first.Gold_medals + first.Silver_medals + first.Bronze_medals;
+	var second_medals = second.Gold_medals + second.Silver_medals + second.Bronze_medals;
+
+	return second_medals - first_medals;	
 }

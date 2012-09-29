@@ -15,7 +15,13 @@ input[type=button] {
 }
 
 text {
-	fill: #000; 
+	fill: #555; 
+	font-size: 22px;	
+}
+
+#svg_container {
+	position: relative; 
+	float: left;
 }
 
 #svg_container svg {
@@ -38,6 +44,7 @@ path {
 #individual_country_container {
 	position: relative; 
 	float: left;
+	clear: both;
 	margin: 300px; 
  
 	padding: 12px; 
@@ -46,7 +53,7 @@ path {
 	
 	min-width: 54%;
 	left: 17%;  
-	top: 10%;
+	top: 30%;
 	height: 600px; 
 }
 
@@ -54,7 +61,8 @@ path {
 	margin: 0;
 }
 
-#individual_country_container svg {
-	position: absolute; 
-	bottom: 70px; 
+#specific_country {
+	position: relative; 
+	float: left; 
+	top: 30%;
 }
