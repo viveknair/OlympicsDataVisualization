@@ -1,6 +1,21 @@
 body {
+	font-family: 'Helvetica';
+	font-size: 18px;
 	background: url('../images/bg/hipset_bg.png');
 	backgrond-repeat: repeat; 
+}
+
+h2 {
+	font-size: 25px; 
+	margin: 0;
+}
+
+input[type=button] {
+	font-size: 20px; 
+}
+
+text {
+	fill: #000; 
 }
 
 #svg_container svg {
@@ -22,15 +37,17 @@ path {
 
 #individual_country_container {
 	position: relative; 
-	float: right; 
+	float: left;
+	margin: 300px; 
+ 
 	padding: 12px; 
 
 	margin: 25px; 
 	
-	min-width: 27%; 
+	min-width: 54%;
+	left: 25%;  
 	top: 10%;
 	height: 600px; 
-	border: 2px solid #555; 
 }
 
 #individual_country_container p {

@@ -43,7 +43,7 @@ d3.json("libs/data/world-names-combined-olympics.json", function(collection) {
 	
 		gdp_values.sort(d3.ascending)
 	
-		var gdp_scale = d3.scale.linear()
+		var gdp_scale = d3.scale.log()
 			.domain([gdp_values[0], gdp_values[gdp_values.length - 1]])
 			.interpolate(d3.interpolateRgb)
 			.range(["#ff0000", "#0000ff"])
@@ -62,13 +62,15 @@ d3.json("libs/data/world-names-combined-olympics.json", function(collection) {
 				if ( d.information && d.information.gdp) {
 					return gdp_scale(d.information.gdp);
 				} else {
-					return "black";
+					return "#AAA";
 				}
 	  	})
 	  	.on("mouseover", function(d) {
 	  		var country = d3.select(this)
-	  		country.style('stroke', 'black')
-	  		country.style('fill', 'turquoise')
+	  		country.transition()
+					.duration(300)
+					.style('stroke', 'black')
+
 				if ( d.information && d.information.gdp) {
 					revealCountryInformation(d)
 				} else {
@@ -77,10 +79,9 @@ d3.json("libs/data/world-names-combined-olympics.json", function(collection) {
 	  	})
 	  	.on("mouseout", function(d) {
 	  		var country = d3.select(this)
-	  		country.style('stroke', 'none')
-	  		country.style('fill', function() {
-					return ( d.information && d.information.gdp) ? gdp_scale(d.information.gdp) : "black";
-				})
+	  		country.transition()
+					.duration(300)
+					.style('stroke', '#FFF')
 	  	})
 			.on("click", function(d) {
 				revealCountryInformation(d)
@@ -158,30 +159,32 @@ function revealCountryInformation(data) {
 	console.log(data)	
 	country_selection = d3.select('#individual_country_container #specific_country')
 
-	country_selection.html('p')
+	country_selection.html('')
+	country_selection.append('h2')
 		.text(data.information['wb:name'])
 
 	country_selection.append('p')
-		.text(data.information.gdp)
+		.text("GDP: " + data.information.gdp)
 
 	country_selection.append('p')
-		.text("Gold medals " + data.information.gold_medals)
+		.text("Gold medals: " + data.information.gold_medals)
 
 	country_selection.append('p')
-		.text("Silver medals " + data.information.silver_medals)
+		.text("Silver medals: " + data.information.silver_medals)
 
 	country_selection.append('p')
-		.text("Bronze medals " + data.information.bronze_medals)
+		.text("Bronze medals: " + data.information.bronze_medals)
 
 }
 
 function showNoData(d) {
 	country_selection = d3.select('#individual_country_container #specific_country')
+	country_selection.html('')
 	if (d.information) {
-		country_selection.html('p')
+		country_selection.append('h3')
 			.text('No information available for ' + d.information['wb:name'])
 	} else {
-			country_selection.html('p')
+			country_selection.append('h3')
 			.text('No information available')
 	}
 }
@@ -189,74 +192,172 @@ function showNoData(d) {
 
 function	constructBarGraphs(countries) {
 
-	var total_width = 500;
-	var total_height = 400; 
+	var main_total_width = 1000;
+	var main_total_height = 500; 
 	var num_countries = countries.length;
-	var padding = 10;
-  var indiv_country_length = total_width / num_countries - padding;
-  var my = d3.max(countries, function(d) { return d.Gold_medals + d.Silver_medals + d.Bronze_medals; })
+	var padding = 3;
+  var indiv_country_length = (main_total_width - 40) / num_countries - padding;
+  var my = d3.max(countries, function(d) { 
+		return d.Gold_medals + d.Silver_medals + d.Bronze_medals;
+	 })
 
 	console.log("Countries length " + num_countries + ": Max y is " + my);
 
-	height_scale = d3.scale.linear().domain([0, my]).range([0, total_height])
+	height_scale = d3.scale.linear().domain([0, my]).range([0, main_total_height - 60])
 
-	var x = function(data, index) { return index * (500 / num_countries) }
+	var x = function(data, index) { return index * ((main_total_width - 40) / num_countries) }
 
 	var bar_graph_svg = d3.select('#individual_country_container')
     .append('svg:svg')
-		.attr('width', total_width)
-		.attr('height', total_height);
+		.attr('width', main_total_width + 30)
+		.attr('height', main_total_height + 30);
+
+	x_axis_label = bar_graph_svg.append('svg:text')
+		.text('Countries')	
+		.style('fill', '#555')
+		.attr('transform', function() {
+			return 'translate(' + ((main_total_width - 30) / 2) + ',' + (main_total_height + 30) + ')';
+		})
+
+	country_ticks = bar_graph_svg.selectAll('line.x_ticks')
+		.data(countries)
+	 .enter().append('svg:line')
+		.attr('y1', 0)
+		.attr('y2', main_total_height)
+		.attr('x1', function(d, i) {
+			return x(d, i);
+		})
+		.attr('x2', function(d, i) {
+			return x(d, i);
+		})
+		.attr('transform', function(d, i) {
+			return 'translate(' + 53 + ', 0)';
+		})
+		.style('opacity', 0.0)
+		.style('stroke', '#AAA')
+		.style('stroke-width', 2)
+
+	country_ticks
+		.transition()
+		.delay(1200)
+		.duration(300)
+		.style('opacity', 0.2)
 
 	// Gold Rectangle
-	bar_graph_svg.selectAll('rect.gold')
+	var rect_gold = bar_graph_svg.selectAll('rect.gold')
 		.data(countries)
 	 .enter().append('svg:rect')	
 		.attr('transform', function(d, i) {
-			return 'translate(' + x(d, i) + ', 0)';
+			return 'translate(' + (x(d, i) + 30) + ', 50)';
 		})
 		.attr('width', indiv_country_length)
+		.attr('height', 0)
+		.style('fill', '#f7bc0c')
+		.style('stroke', '#FFF')
+
+	rect_gold
+	 .transition()
+	  .delay(300)
+	  .duration(300)
 		.attr('height', function(d) {
 			total_height = d.Gold_medals + d.Silver_medals + d.Bronze_medals;
 			return height_scale(total_height);
 		})
-		.style('fill', '#f7bc0c')
-		.style('stroke', '#000')
+		.attr('transform', function(d, i) {
+			remaining_height = main_total_height - 40 - height_scale(d.Gold_medals + d.Silver_medals + d.Bronze_medals);
+			return 'translate(' + (x(d, i) + 30) + ', ' + (50 + remaining_height) + ')';
+		})
 
-	bar_graph_svg.selectAll('rect.silver')
+
+	var rect_silver = bar_graph_svg.selectAll('rect.silver')
 		.data(countries)
 	 .enter().append('svg:rect')	
 		.attr('transform', function(d, i) {
-			return 'translate(' + x(d, i) + ', 0)';
+			return 'translate(' + (x(d, i) + 30) + ', 50)';
 		})
 		.attr('width', indiv_country_length)
+		.attr('height', 0)
+		.style('fill', '#cecece')
+		.style('stroke', '#FFF')
+
+	rect_silver
+	 .transition()
+	  .delay(600)
+	  .duration(300)
 		.attr('height', function(d) {
 			total_height = d.Silver_medals + d.Bronze_medals;
 			return height_scale(total_height);
 		})
-		.style('fill', '#cecece')
-		.style('stroke', '#000')
+		.attr('transform', function(d, i) {
+			remaining_height = main_total_height - 40 - height_scale(d.Silver_medals + d.Bronze_medals);
+			return 'translate(' + (x(d, i) + 30) + ', ' + (50 + remaining_height) + ')';
+		})
 
-	bar_graph_svg.selectAll('rect.bronze')
+	var rect_bronze = bar_graph_svg.selectAll('rect.bronze')
 		.data(countries)
 	 .enter().append('svg:rect')	
 		.attr('transform', function(d, i) {
-			return 'translate(' + x(d, i) + ', 0)';
+			return 'translate(' + (x(d, i) + 30)+ ', 50)';
 		})
 		.attr('width', indiv_country_length)
+		.attr('height', 0)
+		.style('fill', '#bc6620')
+		.style('stroke', '#FFF')
+		.style('stroke-width', '1')
+
+	rect_bronze
+	 .transition()
+	  .delay(900)
+	  .duration(300)
 		.attr('height', function(d) {
 			total_height = d.Bronze_medals;
 			return height_scale(total_height);
 		})
-		.style('fill', '#bc6620')
-		.style('stroke', '#AAA')
-		.style('stroke-width', '1')
+		.attr('transform', function(d, i) {
+			remaining_height = main_total_height - 40 - height_scale(d.Bronze_medals);
+			return 'translate(' + (x(d, i) + 30)+ ', ' + (50 + remaining_height) + ')'; })
 
-	bar_graph_svg.selectAll('text.iso')
+	rect_text_label = bar_graph_svg.selectAll('text.iso')
 		.data(countries)
 	 .enter().append('svg:text')
-		.style('fill', '#000')
+		.style('opacity', 0.0)
+		.style('font-size', 15)
+		.attr('class', 'iso')
 		.attr('transform', function(d, i) {
-			return 'translate(' + x(d, i) + ', 0)';
+			y_shift = 65;
+			return 'translate(' + (x(d, i) + 45) + ', ' + y_shift + ') rotate(270)';
 		})
-		.text(function(d) { return d.ISO_country_code })
+		.text(function(d) { return String(d.Country_name) })
+
+	console.log( "Height Scale" )
+	console.log( height_scale.ticks(10) )
+
+
+	rect_text_label
+	 .transition()
+		.delay(1000)	
+		.duration(300)
+		.style('opacity', 1.0)
+
+	y_axis_ticks = bar_graph_svg.selectAll('line.y_ticks')	
+		.data(height_scale.ticks(5))
+	 .enter().append('svg:line')
+		.attr('x1', 30)
+		.attr('y1', function(d, i) {
+			return height_scale(d) + 86;
+		})
+		.attr('x2', 40)
+		.attr('y2', function(d, i) {
+			return height_scale(d) + 86;
+		})
+		.style('stroke', '#555')
+
+	y_axis_labels = bar_graph_svg.selectAll('text.y_label_text')
+		.data(height_scale.ticks(5))
+ 	 .enter().append('svg:text')	
+		.attr('transform', function(d, i) {
+			return 'translate(0, ' + (main_total_height - height_scale(d) + 10) + ')';
+		})
+		.text(function(d, i) { return String(d);	})
+
 }
