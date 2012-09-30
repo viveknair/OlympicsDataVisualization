@@ -192,6 +192,17 @@ function showNoData(d) {
 
 function	constructBarGraphs(countries) {
 
+	var gdp_color_data = [
+		{ "type" : "High GDP", "color" : "#36c91a" },
+		{ "type" : "Low GDP", "color" : "#ff0000" }
+	]
+
+	var color_data = [
+		{ "type" : "Gold", "color" : "#f7bc0c" },
+		{ "type" : "Silver", "color" : "#f2f2f2" },
+		{ "type" : "Bronze", "color" : "#bc6620" }
+	]
+
 	countries.sort(sortCountriesByMedals);
 
 	var main_total_width = 1300;
@@ -203,10 +214,25 @@ function	constructBarGraphs(countries) {
   var indiv_country_length = (bar_graph_total_width - 40) / num_countries - padding;
   var my = d3.max(countries, function(d) { 
 		return d.Gold_medals + d.Silver_medals + d.Bronze_medals;
-	 })
+  })
+
+	var max_gdp_y = d3.max(countries, function(d) { 
+		return d['2011_GDP']
+  })
+
+	var min_gdp_y = d3.min(countries, function(d) { 
+		return d['2011_GDP']
+  })
+
+	console.log('Min is ' + min_gdp_y + ' Max is ' + max_gdp_y)
 
 	height_scale = d3.scale.linear().domain([0, my]).range([0, bar_graph_total_height - 60])
 
+	gdp_color_scale = d3.scale.log()
+		.domain([min_gdp_y, max_gdp_y])
+		.interpolate(d3.interpolateRgb)
+		.range(['red', '#00ff21'])
+		
 	var x = function(data, index) { return index * ((bar_graph_total_width - 40) / num_countries) }
 
 	var main_graph_svg = d3.select('#individual_country_container')
@@ -214,10 +240,23 @@ function	constructBarGraphs(countries) {
 		.attr('width', main_total_width)
 		.attr('height', main_total_height);
 
+	var def_symbols = main_graph_svg.append('svg:defs')
+
+	def_symbols.append("svg:marker")
+    .attr("id", "arrow_head")
+    .attr("viewBox", "0 -5 10 10")
+    .attr("refX", 5)
+    .attr("refY", -.5)
+    .attr("markerWidth", 20)
+    .attr("markerHeight", 20)
+    .attr("orient", "auto")
+  .append("svg:path")
+    .attr("d", "M0,-5L10,0L0,5");
+
 	var bar_graph_svg = main_graph_svg.append('svg:g')
 		.attr('class', 'stacked_bar_graph')
 		.attr('transform', function() {
-			return 'translate(' + ( (main_total_width - bar_graph_total_width) / 2 ) + ', 20)';
+			return 'translate(' + ( (main_total_width - bar_graph_total_width) / 2 ) + ', 60)';
 		})
 
 	x_axis_label = bar_graph_svg.append('svg:text')
@@ -338,10 +377,9 @@ function	constructBarGraphs(countries) {
 			return 'translate(' + (x(d, i) + 45) + ', ' + y_shift + ') rotate(270)';
 		})
 		.text(function(d) { return String(d.Country_name) })
-
-	console.log( "Height Scale" )
-	console.log( height_scale.ticks(10) )
-
+		.style('fill', function(d) {
+			return gdp_color_scale(d['2011_GDP'])
+		})
 
 	rect_text_label
 	 .transition()
@@ -380,7 +418,116 @@ function	constructBarGraphs(countries) {
 		})
 		.style('fill', '#555')
 
+	var gdp_group_legend = bar_graph_svg.append('svg:g')
+		.attr('class', 'gdp_legend')
+		.attr('transform', function(d, i) {
+			return 'translate(' + (bar_graph_total_width * 0.50 ) + ',' + (bar_graph_total_height * 0.25) + ')';
+		})
 
+	var transition_arrow = gdp_group_legend
+		.append('svg:line')
+		.attr('x1', 0)	
+		.attr('x2', 180)	
+		.attr('y1', 0)	
+		.attr('y2', 0)	
+		.attr('transform', function() {
+			return 'translate(30, 10)';
+		})
+		.style('stroke', '#AAA')
+		.style('opacity', 0.0)
+ 		.attr("marker-end", "url(#arrow_head)");
+
+	transition_arrow
+		.transition()
+		.duration(300)
+		.delay(1200)
+		.style('opacity', 1.0)
+		
+	var gdp_legend = gdp_group_legend
+		.selectAll('g.gdp_color_data')
+		.data(gdp_color_data)
+	 .enter().append('svg:g')
+
+	var gdp_legend_rect = gdp_legend
+		.append('svg:rect')
+		.attr('width', 20)
+		.attr('height', 20)
+		.attr('transform', function(d, i) {
+			return 'translate(' + (230 * i) + ', 0)';
+		})
+		.attr('stroke', '#555')
+		.style('fill', function(d, i) {
+			return d.color;
+		})
+		.style('opacity', 0.0)
+
+	gdp_legend_rect
+		.transition()
+		.duration(300)
+		.delay(1200)
+		.style('opacity', 1.0)
+
+	var gdp_legend_text = gdp_legend
+		.append('svg:text')
+		.text(function(d, i) {
+			return d.type;
+		})
+		.attr('transform', function(d, i) {
+			var bounding_box = this.getBBox();
+			var width = bounding_box.width;
+			return 'translate(' + (230 * i - width / 2) + ', -10)';
+		})
+		.style('opacity', 0.0)
+
+	gdp_legend_text
+		.transition()
+		.duration(300)
+		.delay(1200)
+		.style('opacity', 1.0)
+
+
+	var legend = bar_graph_svg.append('svg:g')
+		.attr('class', 'legend')
+		.attr('transform', function() {
+			return 'translate(' + (bar_graph_total_width * 0.75) + ',' + (bar_graph_total_height * 0.60) + ')';
+		})
+		.selectAll('g.color_item')
+		.data(color_data)
+	 .enter().append('svg:g')
+
+	var legend_rect = legend
+		.append('svg:rect')
+		.attr('width', 20)
+		.attr('height', 20)
+		.attr('transform', function(d, i) {
+			return 'translate(0,' + (70 * i) + ')';
+		})
+		.style('fill', function(d, i) {
+			return d.color;
+		})	
+		.style('opacity', 0.0)
+		.style('stroke', '#555')
+
+	legend_rect
+		.transition()
+		.delay(1200)
+		.duration(300)
+		.style('opacity', 1.0)
+		
+	var legend_text = legend
+		.append('svg:text')
+		.attr('transform', function(d, i) {
+			return 'translate(0,' + (70 * i - 10) + ')';
+		})
+		.style('opacity', 0.0)
+		.text(function(d, i) { return d.type;	})
+
+	legend_text
+		.transition()
+		.delay(1200)
+		.duration(300)
+		.style('opacity', 1.0)
+				
 }
 
 function sortCountriesByMedals(first, second) {
